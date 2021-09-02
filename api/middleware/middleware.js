@@ -28,11 +28,19 @@ function validateUserId(req, res, next) {
 }
 
 function validateUser(req, res, next) {
-  // DO YOUR MAGIC
+  if(!req.body.name) {
+    next({message: 'missing required name field', status: 400})
+  } else {
+    next()
+  }
 }
 
 function validatePost(req, res, next) {
-  // DO YOUR MAGIC
+  if(!req.body.text) {
+    next({ message: 'missing required text field', status: 400})
+  } else {
+    next()
+  }
 }
 
 // do not forget to expose these functions to other modules

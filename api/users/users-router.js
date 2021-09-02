@@ -2,6 +2,7 @@ const express = require('express');
 const Users = require('./users-model');
 const Posts = require('../posts/posts-model');
 const { validateUserId, validateUser, validatePost } = require('../middleware/middleware');
+const { restart } = require('nodemon');
 
 
 // You will need `users-model.js` and `posts-model.js` both
@@ -21,15 +22,21 @@ router.get('/:id', validateUserId, (req, res, next) => {
   res.status(200).json(req.user)
 });
 
-router.post('/', (req, res) => {
-  // RETURN THE NEWLY CREATED USER OBJECT
-  // this needs a middleware to check that the request body is valid <--! ValidateUser
+router.post('/', validateUser, (req, res, next) => {
+  Users.insert(req.body)
+    .then(user => {
+      console.log(user)
+      res.status(200).json(user)
+    })
+    .catch(next)
 });
 
-router.put('/:id', (req, res) => {
-  // RETURN THE FRESHLY UPDATED USER OBJECT
-  // this needs a middleware to verify user id
-  // and another middleware to check that the request body is valid <--! ValidateUser
+router.put('/:id', validateUserId, validateUser, (req, res, next) => {
+    Users.update(req.params.id, req.body)
+      .then(updatedUser => {
+        res.status(200).json(updatedUser)
+      })
+      .catch(next)
 });
 
 router.delete('/:id', validateUserId, (req, res, next) => {
@@ -45,15 +52,25 @@ router.delete('/:id', validateUserId, (req, res, next) => {
 
 });
 
-router.get('/:id/posts', (req, res) => {
+router.get('/:id/posts', validateUserId, (req, res, next) => {
   // RETURN THE ARRAY OF USER POSTS
-  // this needs a middleware to verify user id
+  const { id } = req.params;
+
+  Users.getUserPosts(id)
+    .then(posts => {
+      res.status(200).json(posts)
+    })
+    .catch(next)
 });
 
-router.post('/:id/posts', (req, res) => {
-  // RETURN THE NEWLY CREATED USER POST
-  // this needs a middleware to verify user id
-  // and another middleware to check that the request body is valid <--! ValidateUser
+router.post('/:id/posts', validateUserId, validatePost, (req, res, next) => {
+    req.body.user_id = req.params.id
+
+    Posts.insert(req.body)
+      .then(newPost => {
+        res.status(200).json(newPost)
+      })
+      .catch(next)
 });
 
 router.use((err, req, res, next) => {
